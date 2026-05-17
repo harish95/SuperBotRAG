@@ -63,4 +63,8 @@ export interface HealthStatus {
   openai_configured: boolean;
   embedding_model: string;
   chat_model: string;
+  dynamodb?: string;
+  redis?: string;
+  qdrant?: string;
+  s3?: string;
 }

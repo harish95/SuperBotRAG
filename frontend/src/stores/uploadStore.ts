@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { isAxiosError } from "axios";
 
 import { uploadApi } from "@/api/uploadApi";
 import type { UploadEntry } from "@/types";
@@ -72,8 +73,16 @@ export const useUploadStore = create<UploadState>()(
                 ...upload,
                 ...status,
                 progress: status.status === "processed" ? 100 : upload.progress ?? 0,
-              };
-            } catch {
+              } as UploadEntry;
+            } catch (error) {
+              if (isAxiosError(error) && error.response?.status === 404) {
+                return {
+                  ...upload,
+                  status: "failed",
+                  progress: 0,
+                } as UploadEntry;
+              }
+
               return upload;
             }
           }),

@@ -7,10 +7,42 @@ services:
     ports:
       - "8000:8000"
     environment:
-      JWT_SECRET: development-secret
+      DYNAMODB_USERS_TABLE: enterprise-rag-users
+      DYNAMODB_CHAT_LOGS_TABLE: enterprise-rag-chat-logs
+      DYNAMODB_DOCUMENTS_TABLE: enterprise-rag-documents
+      DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
+      DYNAMODB_AUTO_CREATE_TABLES: "true"
+      REDIS_URL: redis://redis:6379
+      QDRANT_URL: http://qdrant:6333
+      QDRANT_COLLECTION: enterprise_rag
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_REGION: us-east-1
+      S3_BUCKET: rag-documents
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_USE_SSL: "false"
+      S3_AUTO_CREATE_BUCKET: "true"
+      OPENAI_EMBEDDING_DIMENSIONS: "1536"
+      SPARSE_MODEL: Qdrant/bm25
+      RERANKER_MODEL: BAAI/bge-reranker-base
+      PARENT_CHUNK_SIZE: "1800"
+      PARENT_CHUNK_OVERLAP: "200"
+      CHILD_CHUNK_SIZE: "400"
+      CHILD_CHUNK_OVERLAP: "60"
+      RETRIEVAL_TOP_K: "12"
+      RERANK_TOP_N: "4"
+      REDIS_CACHE_DISTANCE_THRESHOLD: "0.12"
+      REDIS_CACHE_TTL_SECONDS: "86400"
       CORS_ORIGINS: http://localhost:5173
-    volumes:
-      - ./backend/data:/app/data
+      JWT_SECRET: development-secret
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
+      OPENAI_CHAT_MODEL: ${OPENAI_CHAT_MODEL:-gpt-4.1-mini}
+    depends_on:
+      - dynamodb
+      - redis
+      - qdrant
+      - minio
 
   frontend:
     build:
@@ -19,3 +51,39 @@ services:
       - "5173:80"
     depends_on:
       - backend
+
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    command: "-jar DynamoDBLocal.jar -sharedDb -inMemory"
+    ports:
+      - "8008:8000"
+
+  redis:
+    image: redis/redis-stack-server:latest
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+volumes:
+  qdrant_data:
+  minio_data:
