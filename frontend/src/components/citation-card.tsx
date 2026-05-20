@@ -1,25 +1,39 @@
 import { FileText } from "lucide-react";
 
-import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { Citation } from "@/types";
 
-export function CitationCard({ citation }: { citation: Citation }) {
+interface CitationPillProps {
+  citation: Citation;
+  index: number;
+  active?: boolean;
+  onClick?: () => void;
+}
+
+export function CitationPill({ citation, index, active = false, onClick }: CitationPillProps) {
   return (
-    <Card className="border-slate-200 bg-slate-50 p-4 shadow-none">
-      <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-white p-2 shadow-sm">
-          <FileText className="h-4 w-4 text-blue-600" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-medium text-slate-900">{citation.document}</p>
-            {citation.page ? (
-              <span className="text-xs text-slate-500">Page {citation.page}</span>
-            ) : null}
-          </div>
-          <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{citation.snippet}</p>
-        </div>
-      </div>
-    </Card>
+    <button
+      type="button"
+      onClick={onClick}
+      title={citation.snippet}
+      className={cn(
+        "group inline-flex max-w-[18rem] items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition",
+        active
+          ? "border-blue-300 bg-blue-50 text-blue-700"
+          : "border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50/60 hover:text-blue-700",
+      )}
+    >
+      <span
+        className={cn(
+          "inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-semibold",
+          active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-700",
+        )}
+      >
+        {index + 1}
+      </span>
+      <FileText className="h-3 w-3 shrink-0 opacity-70" />
+      <span className="truncate font-medium">{citation.document}</span>
+      {citation.page ? <span className="shrink-0 opacity-70">· p.{citation.page}</span> : null}
+    </button>
   );
 }

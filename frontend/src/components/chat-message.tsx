@@ -3,7 +3,7 @@ import { Bot, Copy, User2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
-import { CitationCard } from "@/components/citation-card";
+import { CitationPill } from "@/components/citation-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/utils";
@@ -19,6 +19,7 @@ export function ChatMessage({ message, animate = false }: ChatMessageProps) {
   const [visibleText, setVisibleText] = useState(
     message.role === "assistant" && animate ? "" : message.content,
   );
+  const [activeCitation, setActiveCitation] = useState<number | null>(null);
 
   useEffect(() => {
     if (message.role !== "assistant" || !animate) {
@@ -102,18 +103,28 @@ export function ChatMessage({ message, animate = false }: ChatMessageProps) {
         </div>
 
         {message.role === "assistant" && message.citations?.length ? (
-          <div className="mt-5 space-y-3 border-t border-slate-100 pt-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-              Citations
-            </p>
-            <div className="space-y-3">
+          <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Sources
+              </span>
               {message.citations.map((citation, index) => (
-                <CitationCard
+                <CitationPill
                   key={`${citation.document}-${citation.page ?? "na"}-${index}`}
                   citation={citation}
+                  index={index}
+                  active={activeCitation === index}
+                  onClick={() =>
+                    setActiveCitation((current) => (current === index ? null : index))
+                  }
                 />
               ))}
             </div>
+            {activeCitation !== null && message.citations[activeCitation] ? (
+              <blockquote className="rounded-lg border-l-2 border-blue-300 bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                {message.citations[activeCitation].snippet}
+              </blockquote>
+            ) : null}
           </div>
         ) : null}
       </div>
