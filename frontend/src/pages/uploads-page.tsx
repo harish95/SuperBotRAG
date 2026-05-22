@@ -1,36 +1,54 @@
 import { useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
+import { documentsApi } from "@/api/documentsApi";
+import { getApiErrorMessage } from "@/api/client";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/utils";
-import { useUploadStore } from "@/stores/uploadStore";
+import type { DocumentRecord } from "@/types";
 
 const PAGE_SIZE = 6;
 
 export function UploadsPage() {
-  const uploads = useUploadStore((state) => state.uploads);
-  const fetchUploads = useUploadStore((state) => state.fetchUploads);
+  const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"all" | "processed" | "processing" | "failed">("all");
   const [page, setPage] = useState(1);
+  const [pendingDelete, setPendingDelete] = useState<DocumentRecord | null>(null);
 
-  useEffect(() => {
-    void fetchUploads();
-  }, [fetchUploads]);
+  const documentsQuery = useQuery({
+    queryKey: ["my-documents"],
+    queryFn: documentsApi.listMine,
+  });
 
-  const filteredUploads = useMemo(() => {
-    return uploads.filter((upload) => {
-      const matchesQuery = upload.filename.toLowerCase().includes(query.toLowerCase());
-      const matchesStatus = status === "all" ? true : upload.status === status;
+  const deleteMutation = useMutation({
+    mutationFn: documentsApi.remove,
+    onSuccess: () => {
+      toast.success("Document deleted.");
+      void queryClient.invalidateQueries({ queryKey: ["my-documents"] });
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error)),
+  });
+
+  const documents = documentsQuery.data || [];
+
+  const filteredDocuments = useMemo(() => {
+    return documents.filter((document) => {
+      const matchesQuery = document.filename.toLowerCase().includes(query.toLowerCase());
+      const matchesStatus = status === "all" ? true : document.status === status;
       return matchesQuery && matchesStatus;
     });
-  }, [query, status, uploads]);
+  }, [documents, query, status]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredUploads.length / PAGE_SIZE));
-  const paginatedUploads = filteredUploads.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageCount = Math.max(1, Math.ceil(filteredDocuments.length / PAGE_SIZE));
+  const paginatedDocuments = filteredDocuments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   useEffect(() => {
     setPage(1);
@@ -40,7 +58,7 @@ export function UploadsPage() {
     <Card>
       <CardHeader>
         <CardTitle>Upload history</CardTitle>
-        <CardDescription>Search and filter documents uploaded from this frontend session.</CardDescription>
+        <CardDescription>Review and delete documents you have uploaded to the retrieval index.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -68,6 +86,8 @@ export function UploadsPage() {
           </div>
         </div>
 
+        {documentsQuery.isLoading ? <LoadingSpinner label="Loading documents" /> : null}
+
         <div className="overflow-hidden rounded-2xl border border-slate-200">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
@@ -77,24 +97,36 @@ export function UploadsPage() {
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Uploaded at</th>
                   <th className="px-4 py-3">Chunk count</th>
+                  <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {paginatedUploads.length ? (
-                  paginatedUploads.map((upload) => (
-                    <tr key={upload.id}>
-                      <td className="px-4 py-4 font-medium text-slate-900">{upload.filename}</td>
+                {paginatedDocuments.length ? (
+                  paginatedDocuments.map((document) => (
+                    <tr key={document.id}>
+                      <td className="px-4 py-4 font-medium text-slate-900">{document.filename}</td>
                       <td className="px-4 py-4">
-                        <StatusBadge status={upload.status} />
+                        <StatusBadge status={document.status} />
                       </td>
-                      <td className="px-4 py-4 text-slate-600">{formatDateTime(upload.upload_time)}</td>
-                      <td className="px-4 py-4 text-slate-600">{upload.chunk_count}</td>
+                      <td className="px-4 py-4 text-slate-600">{formatDateTime(document.upload_time)}</td>
+                      <td className="px-4 py-4 text-slate-600">{document.chunk_count}</td>
+                      <td className="px-4 py-4 text-right">
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => setPendingDelete(document)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </Button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td className="px-4 py-10 text-center text-slate-500" colSpan={4}>
-                      No uploads match your current filters.
+                    <td className="px-4 py-10 text-center text-slate-500" colSpan={5}>
+                      No documents match your current filters.
                     </td>
                   </tr>
                 )}
@@ -122,6 +154,19 @@ export function UploadsPage() {
           </div>
         </div>
       </CardContent>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title="Delete document"
+        description={`Permanently delete "${pendingDelete?.filename}" and its indexed chunks? This cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (pendingDelete) {
+            deleteMutation.mutate(pendingDelete.id);
+          }
+        }}
+      />
     </Card>
   );
 }

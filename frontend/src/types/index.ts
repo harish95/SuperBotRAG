@@ -1,7 +1,10 @@
+export type UserRole = "admin" | "user";
+
 export interface User {
   id: string;
   email: string;
   full_name: string;
+  role: UserRole;
   created_at: string;
 }
 
@@ -31,6 +34,7 @@ export interface ChatMessage {
   citations?: Citation[];
   cached?: boolean;
   failed?: boolean;
+  scopedDocument?: string;
 }
 
 export type UploadStatus = "processing" | "processed" | "failed";
@@ -42,6 +46,7 @@ export interface DocumentRecord {
   uploaded_by: string;
   upload_time: string;
   chunk_count: number;
+  owner_email?: string | null;
 }
 
 export interface UploadEntry extends DocumentRecord {

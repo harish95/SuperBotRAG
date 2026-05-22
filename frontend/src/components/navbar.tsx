@@ -15,7 +15,7 @@ const pageTitles: Record<string, string> = {
   "/chat": "Chat Workspace",
   "/documents": "Document Uploads",
   "/uploads": "Upload History",
-  "/logs": "Logs Viewer",
+  "/admin": "Admin Panel",
   "/settings": "Settings",
 };
 

@@ -3,7 +3,25 @@ import { persist } from "zustand/middleware";
 
 import { authApi } from "@/api/authApi";
 import { getApiErrorMessage, persistAuthSession } from "@/api/client";
+import { useChatStore } from "@/stores/chatStore";
+import { useUploadStore } from "@/stores/uploadStore";
 import type { User } from "@/types";
+
+const LAST_USER_KEY = "last-user-id";
+
+function clearUserScopedData() {
+  useUploadStore.getState().reset();
+  useChatStore.getState().clearChat();
+}
+
+// Clears localStorage-persisted per-user data when the active account changes,
+// so one user cannot see another user's documents or chat on a shared browser.
+function enforceUserScope(userId: string) {
+  if (localStorage.getItem(LAST_USER_KEY) !== userId) {
+    clearUserScopedData();
+    localStorage.setItem(LAST_USER_KEY, userId);
+  }
+}
 
 interface AuthState {
   user: User | null;
@@ -22,6 +40,7 @@ export const useAuthStore = create<AuthState>()(
       initialized: false,
       login: async (email, password) => {
         const response = await authApi.login({ email, password });
+        enforceUserScope(response.user.id);
         persistAuthSession(response.access_token, JSON.stringify(response.user));
         set({
           token: response.access_token,
@@ -30,6 +49,7 @@ export const useAuthStore = create<AuthState>()(
       },
       logout: () => {
         persistAuthSession(null, null);
+        clearUserScopedData();
         set({
           user: null,
           token: null,
@@ -49,6 +69,7 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const user = await authApi.me();
+          enforceUserScope(user.id);
           persistAuthSession(token, JSON.stringify(user));
           set({
             user,

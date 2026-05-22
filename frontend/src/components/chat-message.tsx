@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bot, Copy, User2 } from "lucide-react";
+import { Bot, Copy, FileText, User2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
@@ -64,17 +64,17 @@ export function ChatMessage({ message, animate = false }: ChatMessageProps) {
     >
       <div
         className={cn(
-          "max-w-3xl rounded-3xl border px-5 py-4 shadow-sm",
+          "max-w-3xl rounded-2xl border px-4 py-2.5 shadow-sm",
           message.role === "user"
             ? "border-blue-100 bg-blue-600 text-white"
             : "border-slate-200 bg-white text-slate-800",
         )}
       >
-        <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="mb-1.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.16em]">
             <span
               className={cn(
-                "inline-flex h-7 w-7 items-center justify-center rounded-full",
+                "inline-flex h-6 w-6 items-center justify-center rounded-full",
                 message.role === "user" ? "bg-blue-500/60" : "bg-slate-100 text-blue-600",
               )}
             >
@@ -84,9 +84,15 @@ export function ChatMessage({ message, animate = false }: ChatMessageProps) {
           </div>
 
           <div className="flex items-center gap-2">
+            {message.scopedDocument ? (
+              <span className="inline-flex max-w-[12rem] items-center gap-1 rounded-full bg-blue-500/60 px-2 py-0.5 text-[10px] font-medium text-white">
+                <FileText className="h-3 w-3 shrink-0" />
+                <span className="truncate">{message.scopedDocument}</span>
+              </span>
+            ) : null}
             {message.cached ? <Badge variant="secondary">Cached</Badge> : null}
             {message.role === "assistant" ? (
-              <Button onClick={handleCopy} size="icon" variant="ghost">
+              <Button onClick={handleCopy} size="icon" variant="ghost" className="h-7 w-7">
                 <Copy className="h-4 w-4" />
               </Button>
             ) : null}
@@ -97,13 +103,13 @@ export function ChatMessage({ message, animate = false }: ChatMessageProps) {
           <ReactMarkdown>{visibleText || "..."}</ReactMarkdown>
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3 text-xs text-slate-400">
+        <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-400">
           <span>{formatDateTime(message.createdAt)}</span>
           {message.failed ? <span className="text-rose-500">Delivery issue</span> : null}
         </div>
 
         {message.role === "assistant" && message.citations?.length ? (
-          <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+          <div className="mt-3 space-y-2 border-t border-slate-100 pt-2">
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                 Sources

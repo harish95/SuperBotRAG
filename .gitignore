@@ -3,6 +3,5 @@ __pycache__/
 frontend/node_modules/
 frontend/dist/
 .env
-.env.example
 CODEX.md
 phase1_enterprise_rag_project_plan.md

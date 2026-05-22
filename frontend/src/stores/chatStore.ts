@@ -5,11 +5,18 @@ import { chatApi } from "@/api/chatApi";
 import { createId } from "@/lib/utils";
 import type { ChatMessage } from "@/types";
 
+interface DocumentScope {
+  id: string;
+  filename: string;
+}
+
 interface ChatState {
   messages: ChatMessage[];
   loading: boolean;
-  sendMessage: (question: string) => Promise<void>;
+  draft: string;
+  sendMessage: (question: string, scope?: DocumentScope) => Promise<void>;
   clearChat: () => void;
+  setDraft: (value: string) => void;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -17,7 +24,8 @@ export const useChatStore = create<ChatState>()(
     (set, get) => ({
       messages: [],
       loading: false,
-      sendMessage: async (question) => {
+      draft: "",
+      sendMessage: async (question, scope) => {
         const trimmed = question.trim();
         if (!trimmed) {
           return;
@@ -28,6 +36,7 @@ export const useChatStore = create<ChatState>()(
           role: "user",
           content: trimmed,
           createdAt: new Date().toISOString(),
+          scopedDocument: scope?.filename,
         };
 
         set((state) => ({
@@ -36,7 +45,7 @@ export const useChatStore = create<ChatState>()(
         }));
 
         try {
-          const response = await chatApi.query(trimmed);
+          const response = await chatApi.query(trimmed, scope ? [scope.id] : undefined);
           const assistantMessage: ChatMessage = {
             id: createId("assistant"),
             role: "assistant",
@@ -69,6 +78,9 @@ export const useChatStore = create<ChatState>()(
       },
       clearChat: () => {
         set({ messages: [] });
+      },
+      setDraft: (value) => {
+        set({ draft: value });
       },
     }),
     {

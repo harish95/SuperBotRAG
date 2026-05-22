@@ -2,10 +2,10 @@ import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { DashboardLayout } from "@/layouts/dashboard-layout";
+import { AdminPage } from "@/pages/admin-page";
 import { DocumentsPage } from "@/pages/documents-page";
 import { ChatPage } from "@/pages/chat-page";
 import { LoginPage } from "@/pages/login-page";
-import { LogsPage } from "@/pages/logs-page";
 import { RegisterPage } from "@/pages/register-page";
 import { SettingsPage } from "@/pages/settings-page";
 import { UploadsPage } from "@/pages/uploads-page";
@@ -46,7 +46,14 @@ export default function App() {
         <Route path="chat" element={<ChatPage />} />
         <Route path="documents" element={<DocumentsPage />} />
         <Route path="uploads" element={<UploadsPage />} />
-        <Route path="logs" element={<LogsPage />} />
+        <Route
+          path="admin"
+          element={
+            <ProtectedRoute requireAdmin>
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 

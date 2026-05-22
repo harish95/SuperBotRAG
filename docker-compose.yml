@@ -6,44 +6,17 @@ services:
       context: ./backend
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-      DYNAMODB_USERS_TABLE: enterprise-rag-users
-      DYNAMODB_CHAT_LOGS_TABLE: enterprise-rag-chat-logs
-      DYNAMODB_DOCUMENTS_TABLE: enterprise-rag-documents
+      # Local Docker stack overrides: these point at the compose service
+      # names and intentionally replace any cloud / real-AWS values in .env.
       DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
-      DYNAMODB_AUTO_CREATE_TABLES: "true"
       REDIS_URL: redis://redis:6379
       QDRANT_URL: http://qdrant:6333
-      QDRANT_COLLECTION: enterprise_rag
-      AWS_ACCESS_KEY_ID: minioadmin
-      AWS_SECRET_ACCESS_KEY: minioadmin
-      AWS_REGION: us-east-1
-      S3_BUCKET: rag-documents
+      QDRANT_API_KEY: ""
       S3_ENDPOINT_URL: http://minio:9000
-      S3_USE_SSL: "false"
-      S3_AUTO_CREATE_BUCKET: "true"
-      OPENAI_EMBEDDING_DIMENSIONS: "1536"
-      SPARSE_MODEL: Qdrant/bm25
-      RERANKER_MODEL: BAAI/bge-reranker-base
-      PARENT_CHUNK_SIZE: "1800"
-      PARENT_CHUNK_OVERLAP: "200"
-      CHILD_CHUNK_SIZE: "400"
-      CHILD_CHUNK_OVERLAP: "60"
-      RETRIEVAL_TOP_K: "12"
-      RERANK_TOP_N: "4"
-      REDIS_CACHE_DISTANCE_THRESHOLD: "0.12"
-      REDIS_CACHE_TTL_SECONDS: "86400"
-      CORS_ORIGINS: http://localhost:5173
-      JWT_SECRET: development-secret
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_EMBEDDING_MODEL: ${OPENAI_EMBEDDING_MODEL:-text-embedding-3-small}
-      OPENAI_CHAT_MODEL: ${OPENAI_CHAT_MODEL:-gpt-4.1-mini}
-      GUARDRAILS_ENABLED: ${GUARDRAILS_ENABLED:-true}
-      GUARDRAILS_MODEL: ${GUARDRAILS_MODEL:-gpt-4o-mini}
-      GUARDRAILS_MAX_INPUT_CHARS: ${GUARDRAILS_MAX_INPUT_CHARS:-2000}
-      GUARDRAILS_MIN_RETRIEVED_DOCS: ${GUARDRAILS_MIN_RETRIEVED_DOCS:-1}
-      GUARDRAILS_BLOCK_PII_OUTPUT: ${GUARDRAILS_BLOCK_PII_OUTPUT:-true}
-      GUARDRAILS_FAIL_OPEN: ${GUARDRAILS_FAIL_OPEN:-true}
+      AWS_REGION: us-east-1
     depends_on:
       - dynamodb
       - redis

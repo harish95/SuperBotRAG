@@ -9,6 +9,7 @@ interface UploadState {
   uploads: UploadEntry[];
   uploadFile: (file: File) => Promise<UploadEntry>;
   fetchUploads: () => Promise<void>;
+  reset: () => void;
 }
 
 export const useUploadStore = create<UploadState>()(
@@ -90,6 +91,7 @@ export const useUploadStore = create<UploadState>()(
 
         set({ uploads: refreshed });
       },
+      reset: () => set({ uploads: [] }),
     }),
     {
       name: "upload-storage",
