@@ -1,0 +1,24 @@
+# Copy this file to terraform.tfvars and fill in real values.
+# terraform.tfvars is git-ignored by default convention — never commit secrets.
+
+aws_region = "ap-south-1"
+app_name   = "enterprise-rag"
+
+# Docker image with the latest backend code (must be linux/amd64).
+# Build + push BEFORE terraform apply. See APPLY_TERRAFORM.md.
+image = "<your-dockerhub-user>/superbotrag-backend:latest"
+
+# ---- secrets ----
+openai_api_key = "sk-..."
+qdrant_api_key = "eyJ..."
+
+# Generate with: openssl rand -hex 32
+jwt_secret = "..."
+
+admin_email    = "you@example.com"
+admin_password = "..."  # >= 12 chars, not a known default
+admin_full_name = "RAG Administrator"
+
+# ---- Qdrant Cloud (defaults to the cluster baked into variables.tf) ----
+# qdrant_url        = "https://....qdrant.io"
+# qdrant_collection = "enterprise_rag"

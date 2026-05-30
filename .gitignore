@@ -5,3 +5,27 @@ frontend/dist/
 .env
 CODEX.md
 phase1_enterprise_rag_project_plan.md
+
+# Python virtual environment
+.venv/
+
+# Credentials and secrets
+creds.txt
+
+# Temporary/scratch files
+scratch/
+logs.json
+
+# AI assistant config
+.claude/
+
+# IDE
+.vscode/
+
+# Terraform
+deploy/terraform/.terraform/
+deploy/terraform/.terraform.lock.hcl
+deploy/terraform/terraform.tfstate
+deploy/terraform/terraform.tfstate.backup
+deploy/terraform/terraform.tfvars
+deploy/terraform/*.tfvars
